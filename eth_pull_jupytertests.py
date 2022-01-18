@@ -90,3 +90,27 @@ df4 = df3.drop(
  'platforms.vite']
  ,axis=1
 )
+
+contract_address_list = []
+
+for x in df4['platforms.harmony-shard-0']:
+    contract_address_list.append(x)
+
+#print(contract_address_list)
+
+api_prefix =  "https://api.coingecko.com/api/v3/simple/token_price/harmony-shard-0?contract_addresses=0x72cb10c6bfa5624dd07ef608027e366bd690048f"
+#api_suffix = "&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true"
+api_suffix = "&vs_currencies=usd"
+
+for y in contract_address_list:
+   api_prefix = api_prefix + "%2C" + y
+
+api_url = api_prefix + api_suffix
+
+response = requests.get(api_url)
+response = response.json()
+#print(response)
+df2 = pd.json_normalize(response)
+df3 = df2.transpose()
+#df3 = df3[0].str.split()
+print(df3.select_dtypes())
