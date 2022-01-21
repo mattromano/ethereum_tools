@@ -15,13 +15,7 @@ charset-normalizer==2.0.8
 colorama==0.4.4
 cramjam==2.5.0
 cryptography==3.4.8
-dbt @ file:///dist/dbt-0.21.1-py3-none-any.whl
-dbt-bigquery @ file:///dist/dbt_bigquery-0.21.1-py3-none-any.whl
-dbt-core @ file:///dist/dbt_core-0.21.1-py3-none-any.whl
 dbt-extractor==0.4.0
-dbt-postgres @ file:///dist/dbt_postgres-0.21.1-py3-none-any.whl
-dbt-redshift @ file:///dist/dbt_redshift-0.21.1-py3-none-any.whl
-dbt-snowflake @ file:///dist/dbt_snowflake-0.21.1-py3-none-any.whl
 fastparquet==0.7.2
 fsspec==2022.1.0
 google-api-core==1.31.2
