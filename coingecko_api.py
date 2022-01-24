@@ -36,10 +36,14 @@ def get_contracts(platform_id, is_ethereum_L2: bool):
     for x in df4[platform_id]:
          contract_address_list.append(x)
     return contract_address_list
+
 contract_address_list = get_contracts('platforms.harmony-shard-0',is_ethereum_L2=True)
 
+#get_prices functions takes in three arguments, the contract addresses in a comma seperated list, the Coingecko Platform ID, and a boolean 
+#value for verbose (true will return marketcap, 24 hr volume, and 24 price change as well as price)
+#The function returns a DataFrame with the data formatted and timestamped 
 def get_prices(contract_address_list, platform_id, verbose: bool):
-    #Creating the API Query, can uncomment out the extended_api_suffix to get market_cap and 24 hour volume, still working on ETL for that
+    #Creating the API Query
     #Syntax for query url is: simple/token_price/platformid/comma seperated list of contracts (created above)/api_suffix
     platform_id = platform_id[10:]
     api_prefix =  "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses=0x72cb10c6bfa5624dd07ef608027e366bd690048f".format(platform_id)
@@ -85,4 +89,5 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
         df2['address'] = df2["address"].str[:42]
         df2["timestamp"] = dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
         return df2
+
 df = get_prices(contract_address_list,'platforms.harmony-shard-0',verbose=True)
