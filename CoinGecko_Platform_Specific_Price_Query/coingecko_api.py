@@ -22,11 +22,14 @@ def get_contracts(platform_id, is_ethereum_L2: bool):
     #keeping eth as plaform if it's an L2
     if is_ethereum_L2 == True:
         all_plaform_ids_less_target = [i for i in all_plaform_ids_less_target if i != 'platforms.ethereum']
-    
-    #Isolating to just the Harmony Contracts we need
-    df2 = df1.dropna(subset = platform_id)
-    df4 = df2.drop(all_plaform_ids_less_target, axis=1)
 
+
+    print(df1.head())
+    #Isolating to just the Harmony Contracts we need
+    df2 = df1.dropna(subset=[platform_id])
+    df4 = df2.drop(all_plaform_ids_less_target, axis=1)
+    print(df4[platform_id])
+    
     #Taking the contracts and putting them into a list to set up the price API Query
     contract_address_list = []
     for x in df4[platform_id]:
