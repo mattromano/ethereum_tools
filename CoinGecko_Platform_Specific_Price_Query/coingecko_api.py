@@ -3,11 +3,7 @@ import pandas as pd
 import numpy as np
 import requests
 import datetime as dt
-import os
-import snowflake.connector as sf
-from snowflake.connector.pandas_tools import write_pandas
 
-#will need to install 3 additional python packages
 
 #get_contacts function takes in two arguments, one being the CoinGecko Platform ID and the second is a boolean for if the platform is an ETH L2.
 #Function will return a list of all contract addresses on chosen platform which can be used to set up the CoinGecko API Price Query 
