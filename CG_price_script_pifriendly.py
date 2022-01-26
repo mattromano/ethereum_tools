@@ -2,105 +2,42 @@
 from numpy import float16, float32, float64
 import pandas as pd
 import numpy as np
+import math
 import requests
 import datetime as dt
-import os
-from decouple import config
-import snowflake.connector as sf
-from snowflake.connector.pandas_tools import write_pandas
+
+platform_id = "platforms.harmony-shard-0"
+#get_contacts function takes in two arguments, one being the CoinGecko Platform ID and the second is a boolean for if the platform is an ETH L2.
+#Function will return a list of all contract addresses on chosen platform which can be used to set up the CoinGecko API Price Query 
+def get_contracts(platform_id, is_ethereum_L2: bool):
 
 
-#will need to install pandas on the docker image
+    #Grabbing all of the contracts available on coingecko and the platforms the exist on
+    coin_list = "https://api.coingecko.com/api/v3/coins/list?include_platform=true"
+    response = requests.get(coin_list)
+    response = response.json()
+    df1 = pd.json_normalize(response)
+    all_plaform_ids = list(df1.columns)
+    all_plaform_ids = all_plaform_ids[3:]
+    all_plaform_ids_less_target = [i for i in all_plaform_ids if i != platform_id]
 
-#Grabbing all of the contracts available on coingecko and the platforms the exist on
-coin_list = "https://api.coingecko.com/api/v3/coins/list?include_platform=true"
-response = requests.get(coin_list)
-response = response.json()
-df1 = pd.json_normalize(response)
+    #keeping eth as plaform if it's an L2
+    if is_ethereum_L2 == True:
+        all_plaform_ids_less_target = [i for i in all_plaform_ids_less_target if i != 'platforms.ethereum']
 
 
-#Isolating to just the Harmony Contracts we need
-df2 = df1.dropna(subset = ["platforms.harmony-shard-0"])
-df4 = df2.drop(
-    [
- 'platforms.polygon-pos',
- 'platforms.avalanche',
- 'platforms.binance-smart-chain',
- 'platforms.fantom',
- 'platforms.xdai',
- 'platforms.kardiachain',
- 'platforms.moonriver',
- 'platforms.tron',
- 'platforms.huobi-token',
- 'platforms.sora',
- 'platforms.polkadot',
- 'platforms.chiliz',
- 'platforms.komodo',
- 'platforms.cardano',
- 'platforms.optimistic-ethereum',
- 'platforms.ardor',
- 'platforms.qtum',
- 'platforms.stellar',
- 'platforms.arbitrum-one',
- 'platforms.cronos',
- 'platforms.solana',
- 'platforms.osmosis',
- 'platforms.algorand',
- 'platforms.celo',
- 'platforms.aurora',
- 'platforms.eos',
- 'platforms.neo',
- 'platforms.terra',
- 'platforms.Bitcichain',
- 'platforms.waves',
- 'platforms.okex-chain',
- 'platforms.',
- 'platforms.ronin',
- 'platforms.icon',
- 'platforms.smartbch',
- 'platforms.nem',
- 'platforms.bitshares',
- 'platforms.binancecoin',
- 'platforms.iotex',
- 'platforms.fuse',
- 'platforms.kucoin-community-chain',
- 'platforms.hoo',
- 'platforms.zilliqa',
- 'platforms.klay-token',
- 'platforms.boba',
- 'platforms.secret',
- 'platforms.tezos',
- 'platforms.fusion-network',
- 'platforms.xrp',
- 'platforms.cosmos',
- 'platforms.telos',
- 'platforms.gochain',
- 'platforms.vechain',
- 'platforms.bitcoin-cash',
- 'platforms.tomochain',
- 'platforms.nuls',
- 'platforms.metis-andromeda',
- 'platforms.elrond',
- 'platforms.stratis',
- 'platforms.kava',
- 'platforms.kusama',
- 'platforms.omni',
- 'platforms.metaverse-etp',
- 'platforms.nxt',
- 'platforms.enq-enecuum',
- 'platforms.ontology',
- 'platforms.factom',
- 'platforms.wanchain',
- 'platforms.rootstock',
- 'platforms.openledger',
- 'platforms.vite']
- ,axis=1
- )
+    #Isolating to just the Harmony Contracts we need
+    df2 = df1.dropna(subset=[platform_id])
+    df4 = df2.drop(all_plaform_ids_less_target, axis=1)
+    print(df4[platform_id])
+    
+    #Taking the contracts and putting them into a list to set up the price API Query
+    contract_address_list = []
+    for x in df4[platform_id]:
+         contract_address_list.append(x)
+    return contract_address_list
 
-#Taking the contracts and putting them into a list to set up the price API Query
-contract_address_list = []
-for x in df4['platforms.harmony-shard-0']:
-    contract_address_list.append(x)
+contract_address_list = get_contracts(platform_id,is_ethereum_L2=False)
 
 #Creating the API Query, can uncomment out the extended_api_suffix to get market_cap and 24 hour volume, still working on ETL for that
 #Syntax for query url is: simple/token_price/platformid/comma seperated list of contracts (created above)/api_suffix
