@@ -5,6 +5,10 @@ import numpy as np
 import math
 import requests
 import datetime as dt
+import os
+from decouple import config
+import snowflake.connector as sf
+from snowflake.connector.pandas_tools import write_pandas
 
 platform_id = "platforms.harmony-shard-0"
 #get_contacts function takes in two arguments, one being the CoinGecko Platform ID and the second is a boolean for if the platform is an ETH L2.
