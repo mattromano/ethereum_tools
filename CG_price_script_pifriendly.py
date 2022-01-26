@@ -41,7 +41,7 @@ def get_contracts(platform_id, is_ethereum_L2: bool):
          contract_address_list.append(x)
     return contract_address_list
 
-contract_address_list = get_contracts(platform_id,is_ethereum_L2=False)
+contract_address_list = get_contracts(platform_id,is_ethereum_L2=True)
 
 #Creating the API Query, can uncomment out the extended_api_suffix to get market_cap and 24 hour volume, still working on ETL for that
 #Syntax for query url is: simple/token_price/platformid/comma seperated list of contracts (created above)/api_suffix
