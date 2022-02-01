@@ -98,13 +98,14 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
         response_list = []
         contract_num = len(contract_address_list)
         n = 100
-        count = math.ceil(contract_num/n)
+        count = 5
         while("" in contract_address_list) :
             contract_address_list.remove("")
         list_of_contract_address_list=[contract_address_list[i:i + n] for i in range(0, len(contract_address_list), n)]
-        while count >0:
+        list_of_contract_address_list
+        while count > 0:
             for x in list_of_contract_address_list:
-                while n > 0:
+                while n > 0 and count > 0 :
                     for y in x:
                         if verbose == True:
                             #print(y)
@@ -114,15 +115,16 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
                         else:
                             api_prefix = api_prefix + "%2C" + y
                             api_url = api_prefix + api_suffix                                                
-                    print(len(api_url))
-                    response = requests.get(api_url)
-                    print(response)
-                    response_list.append(response.json()) 
-                    print("the count number is {}".format(count))
-                    n=100
-                    api_prefix_iter = ""
-                    count = count-1
+                print(len(api_url))
+                response = requests.get(api_url)
+                response_list.append(response.json())
+                print(response) 
+                print("the count number is {}".format(count))
+                n=100
+                api_prefix_iter = ""
+                count = count - 1
         df2 = pd.json_normalize(response_list)
+        print(df2.head())
         df2 = df2.transpose()
         df2 = df2.reset_index()
         df2[['address', 'price_data']] =  df2['index'].str.split('.',expand=True)
@@ -135,7 +137,7 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
         df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]] = df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]].astype(float64)
         df2 = df2.round({'usd_24h_vol':2,'usd_market_cap':2,'usd_24h_change':2})
         df2["timestamp"] = dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        print(df2.head())
+        print(df2.describe())
         return df2
 
 df = get_prices(contract_address_list,platform_id,verbose=True)
