@@ -97,34 +97,37 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
     else:
         response_list = []
         contract_num = len(contract_address_list)
+        print(len(contract_address_list))
         n = 100
         count = 0
         while("" in contract_address_list) :
             contract_address_list.remove("")
         list_of_contract_address_list=[contract_address_list[i:i + n] for i in range(0, len(contract_address_list), n)]
         list_of_contract_address_list
-        # while count < 5:
-        for x in list_of_contract_address_list:
-            while n > 0 and count <0:
-                for y in x:
-                    if verbose == True:
-                        #print(y)
-                        api_prefix_iter = api_prefix + "%2C" + y
-                        api_url = api_prefix_iter + extended_api_suffix
-                        n = n-1
-                    else:
-                        api_prefix = api_prefix + "%2C" + y
-                        api_url = api_prefix + api_suffix                                                
-                print(len(api_url))
-                response = requests.get(api_url)
-                response_list.append(response.json())
-                print(response)
-                print(len(response_list))
-            n=100 
-            api_prefix_iter = ""
-        count += 1
+        while count < 5:
+            for x in list_of_contract_address_list:
+                while n > 0:
+                    for y in x:
+                        if verbose == True:
+                            #print(y)
+                            api_prefix_iter = api_prefix + "%2C" + y
+                            api_url = api_prefix_iter + extended_api_suffix
+                            n = n-1
+                        else:
+                            api_prefix = api_prefix + "%2C" + y
+                            api_url = api_prefix + api_suffix                                                
+                    print(len(api_url))
+                    response = requests.get(api_url)
+                    response_list.append(response.json())
+                    print(response)
+                    print(len(response_list))
+                n=100 
+                api_prefix_iter = ""
+            count += 1
         print("the count number is {}".format(count))
+        print(response_list)
         df2 = pd.json_normalize(response_list)
+        df2.to_csv('og_results.csv')
         df2 = df2.transpose()
         df2 = df2.reset_index()
         df2[['address', 'price_data']] =  df2['index'].str.split('.',expand=True)
