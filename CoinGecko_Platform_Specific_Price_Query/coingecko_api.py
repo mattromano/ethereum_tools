@@ -97,33 +97,31 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
     else:
         response_list = []
         contract_num = len(contract_address_list)
+        print(contract_num)
         print(len(contract_address_list))
         n = 100
         count = 0
+
         while("" in contract_address_list) :
             contract_address_list.remove("")
         list_of_contract_address_list=[contract_address_list[i:i + n] for i in range(0, len(contract_address_list), n)]
-        list_of_contract_address_list
-        while count < 5:
-            for x in list_of_contract_address_list:
-                while n > 0:
-                    for y in x:
-                        if verbose == True:
-                            #print(y)
-                            api_prefix_iter = api_prefix + "%2C" + y
-                            api_url = api_prefix_iter + extended_api_suffix
-                            n = n-1
-                        else:
-                            api_prefix = api_prefix + "%2C" + y
-                            api_url = api_prefix + api_suffix                                                
-                    print(len(api_url))
-                    response = requests.get(api_url)
-                    response_list.append(response.json())
-                    print(response)
-                    print(len(response_list))
-                n=100 
-                api_prefix_iter = ""
-            count += 1
+
+        for address_list_trunc in list_of_contract_address_list:
+            if verbose == True:
+                for y in address_list_trunc:
+                    api_prefix = api_prefix + "%2C" + y
+                api_url = api_prefix + extended_api_suffix
+                print(api_url)  
+            else:
+                api_prefix_iter = api_prefix + "%2C" + y
+                api_url = api_prefix + api_suffix 
+                n = n-1                                             
+            response = requests.get(api_url)
+            response_list.append(response.json())
+            print(response)
+            print(len(response_list)) 
+            api_url = ""
+            api_prefix =  "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses=0x72cb10c6bfa5624dd07ef608027e366bd690048f".format(platform_id)
         print("the count number is {}".format(count))
         print(response_list)
         df2 = pd.json_normalize(response_list)
