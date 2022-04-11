@@ -81,7 +81,8 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
             df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]] = df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]].astype(float64)
             df2 = df2.round({'usd_24h_vol':2,'usd_market_cap':2,'usd_24h_change':2})
             df2["timestamp"] = dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-            return df2
+            df3 = df2
+            return df3
         else:
             response = requests.get(api_url)
             response = response.json()
@@ -101,46 +102,45 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
         print(len(contract_address_list))
         n = 100
         count = 0
-
+        column_list = ['address',	'usd',	'usd_24h_change',	'usd_24h_vol',	'usd_market_cap',	'timestamp']
+        df3 = pd.DataFrame(columns=column_list)
+        
+        #ETL of the contract address list to remove blanks
         while("" in contract_address_list) :
             contract_address_list.remove("")
         list_of_contract_address_list=[contract_address_list[i:i + n] for i in range(0, len(contract_address_list), n)]
 
+        #Nested list comprehension to loop through list of lists which contain 50 contract adresses so we can create API URL's that are short enough to work with CG API.
+        #Basically just creating a bunch of smaller API calls instead of one large one with 5k adresses on URL (this doesn't work)
         for address_list_trunc in list_of_contract_address_list:
             if verbose == True:
                 for y in address_list_trunc:
                     api_prefix = api_prefix + "%2C" + y
-                api_url = api_prefix + extended_api_suffix
-                print(api_url)  
+                api_url = api_prefix + extended_api_suffix  
             else:
                 api_prefix_iter = api_prefix + "%2C" + y
                 api_url = api_prefix + api_suffix 
                 n = n-1                                             
             response = requests.get(api_url)
-            response_list.append(response.json())
-            print(response)
-            print(len(response_list)) 
+            response = response.json()
+            df2 = pd.json_normalize(response)
+            df2 = df2.transpose()
+            df2 = df2.reset_index()
+            df2[['address', 'price_data']] =  df2['index'].str.split('.',expand=True)
+            df2 = df2.rename(columns= { 0: "measure"})
+            df2 = df2.drop(columns=['index'], axis=1)
+            df2 = df2[['address','price_data','measure']]
+            df2 = df2.pivot(index='address',columns='price_data',values='measure')
+            df2 = df2.reset_index()
+            df2 = df2.drop(columns=['last_updated_at'], axis=1)
+            df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]] = df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]].astype(float64)
+            df2 = df2.round({'usd_24h_vol':2,'usd_market_cap':2,'usd_24h_change':2})
+            df2["timestamp"] = dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S') 
             api_url = ""
             api_prefix =  "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses=0x72cb10c6bfa5624dd07ef608027e366bd690048f".format(platform_id)
-        print("the count number is {}".format(count))
-        print(response_list)
-        df2 = pd.json_normalize(response_list)
-        df2.to_csv('og_results.csv')
-        df2 = df2.transpose()
-        df2 = df2.reset_index()
-        df2[['address', 'price_data']] =  df2['index'].str.split('.',expand=True)
-        df2 = df2.rename(columns= { 0: "measure"})
-        df2 = df2.drop(columns=['index'], axis=1)
-        df2 = df2[['address','price_data','measure']]
-        df2 = df2.pivot(index='address',columns='price_data',values='measure')
-        df2 = df2.reset_index()
-        df2 = df2.drop(columns=['last_updated_at'], axis=1)
-        df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]] = df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]].astype(float64)
-        df2 = df2.round({'usd_24h_vol':2,'usd_market_cap':2,'usd_24h_change':2})
-        df2["timestamp"] = dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
-        print(df2.describe())
-        print(df2.head())
-        return df2
+            df3 = pd.concat([df2,df3])
+            print(len(df3.index))
+        return df3
 
 df = get_prices(contract_address_list,platform_id,verbose=True)
 df.to_csv('eth_df.csv')
