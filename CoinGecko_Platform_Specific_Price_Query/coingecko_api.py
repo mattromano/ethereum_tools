@@ -96,7 +96,6 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
             df2["timestamp"] = dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
             return df2
     else:
-        response_list = []
         contract_num = len(contract_address_list)
         print(contract_num)
         print(len(contract_address_list))
