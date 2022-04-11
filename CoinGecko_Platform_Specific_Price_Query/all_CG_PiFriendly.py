@@ -44,9 +44,12 @@ contract_address_list = get_contracts(platform_id,is_ethereum_L2=True)
 
 #Creating the API Query, can uncomment out the extended_api_suffix to get market_cap and 24 hour volume, still working on ETL for that
 #Syntax for query url is: simple/token_price/platformid/comma seperated list of contracts (created above)/api_suffix
-api_prefix =  "https://api.coingecko.com/api/v3/simple/token_price/harmony-shard-0?contract_addresses=0x72cb10c6bfa5624dd07ef608027e366bd690048f"
+platform_id = platform_id[10:]
+api_prefix =  "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses=0x72cb10c6bfa5624dd07ef608027e366bd690048f".format(platform_id)
 extended_api_suffix = "&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true"
+api_suffix = "&vs_currencies=usd"
 
+n = 100
 contract_num = len(contract_address_list)
 print(contract_num)
 print(len(contract_address_list))
@@ -65,26 +68,25 @@ for address_list_trunc in list_of_contract_address_list:
         api_prefix = api_prefix + "%2C" + y
     api_url = api_prefix + extended_api_suffix
 
-#ETL on the API response to get into address,usd_price,time_stamp
-response = requests.get(api_url)
-response = response.json()
-df2 = pd.json_normalize(response)
-df2 = df2.transpose()
-df2 = df2.reset_index()
-df2[['address', 'price_data']] =  df2['index'].str.split('.',expand=True)
-df2 = df2.rename(columns= { 0: "measure"})
-df2 = df2.drop(columns=['index'], axis=1)
-df2 = df2[['address','price_data','measure']]
-df2 = df2.pivot(index='address',columns='price_data',values='measure')
-df2 = df2.reset_index()
-df2 = df2.drop(columns=['last_updated_at'], axis=1)
-df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]] = df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]].astype(float64)
-df2 = df2.round({'usd_24h_vol':2,'usd_market_cap':2,'usd_24h_change':2})
-df2["timestamp"] = dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S') 
-api_url = ""
-api_prefix =  "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses=0x72cb10c6bfa5624dd07ef608027e366bd690048f".format(platform_id)
-df3 = pd.concat([df2,df3])
-print(len(df3.index))
+    response = requests.get(api_url)
+    response = response.json()
+    df2 = pd.json_normalize(response)
+    df2 = df2.transpose()
+    df2 = df2.reset_index()
+    df2[['address', 'price_data']] =  df2['index'].str.split('.',expand=True)
+    df2 = df2.rename(columns= { 0: "measure"})
+    df2 = df2.drop(columns=['index'], axis=1)
+    df2 = df2[['address','price_data','measure']]
+    df2 = df2.pivot(index='address',columns='price_data',values='measure')
+    df2 = df2.reset_index()
+    df2 = df2.drop(columns=['last_updated_at'], axis=1)
+    df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]] = df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]].astype(float64)
+    df2 = df2.round({'usd':6,'usd_24h_vol':2,'usd_market_cap':2,'usd_24h_change':2})
+    df2["timestamp"] = dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S') 
+    api_url = ""
+    api_prefix =  "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses=0x72cb10c6bfa5624dd07ef608027e366bd690048f".format(platform_id)
+    df3 = pd.concat([df2,df3])
+    print(len(df3.index))
 
 #Writing into the snowflake - need to fix datetime issues. Address & Price work
 conn = sf.connect(
@@ -97,19 +99,19 @@ conn = sf.connect(
 )
 cs = conn.cursor()
 
-print(df2)
+
 try:
 
     # convert to a string list of tuples
-    df2 = str(list(df2.itertuples(index=False, name=None)))
+    df3 = str(list(df2.itertuples(index=False, name=None)))
     # get rid of the list elements so it is a string tuple list
-    df2 = df2.replace('[','').replace(']','').replace('None','0').replace('nan','0')
-    df2 = df2
+    df3 = df3.replace('[','').replace(']','').replace('None','0').replace('nan','0')
+    df3 = df3
     #print(df2)
     # set up execute
     cs.execute(
          """ INSERT INTO """ + "ALL_COINGECKO_USD_PRICES" + """
-             VALUES """ + df2 + """
+             VALUES """ + df3 + """
          """)
 finally:
     cs.close()

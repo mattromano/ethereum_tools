@@ -100,7 +100,6 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
         print(contract_num)
         print(len(contract_address_list))
         n = 100
-        count = 0
         column_list = ['address',	'usd',	'usd_24h_change',	'usd_24h_vol',	'usd_market_cap',	'timestamp']
         df3 = pd.DataFrame(columns=column_list)
         
@@ -139,6 +138,8 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
             api_prefix =  "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses=0x72cb10c6bfa5624dd07ef608027e366bd690048f".format(platform_id)
             df3 = pd.concat([df2,df3])
             print(len(df3.index))
+        df3 = df3[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]]
+        df3 = df3.reset_index()
         return df3
 
 df = get_prices(contract_address_list,platform_id,verbose=True)
