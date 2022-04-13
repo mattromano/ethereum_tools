@@ -6,7 +6,7 @@ import requests
 import datetime as dt
 import time
 
-platform_id = 'platforms.ethereum'
+platform_id = 'platforms.polygon-pos'
 #get_contacts function takes in two arguments, one being the CoinGecko Platform ID and the second is a boolean for if the platform is an ETH L2.
 #Function will return a list of all contract addresses on chosen platform which can be used to set up the CoinGecko API Price Query 
 def get_contracts(platform_id, is_ethereum_L2: bool):
@@ -23,7 +23,7 @@ def get_contracts(platform_id, is_ethereum_L2: bool):
 
     #keeping eth as plaform if it's an L2
     if is_ethereum_L2 == True:
-        all_plaform_ids_less_target = [i for i in all_plaform_ids_less_target if i != 'platforms.ethereum']
+        all_plaform_ids_less_target = [i for i in all_plaform_ids_less_target if i != platform_id]
 
 
 
@@ -133,14 +133,20 @@ def get_prices(contract_address_list, platform_id, verbose: bool):
             df2 = df2.drop(columns=['last_updated_at'], axis=1)
             df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]] = df2[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]].astype(float64)
             df2 = df2.round({'usd_24h_vol':2,'usd_market_cap':2,'usd_24h_change':2})
-            df2["timestamp"] = dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S') 
+            df2["timestamp"] = dt.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+            df2['usd'] = df2[df2['usd'] < 1000000]['usd']
+            df2.dropna() 
             api_url = ""
             api_prefix =  "https://api.coingecko.com/api/v3/simple/token_price/{}?contract_addresses=0x72cb10c6bfa5624dd07ef608027e366bd690048f".format(platform_id)
             df3 = pd.concat([df2,df3])
             print(len(df3.index))
-        df3 = df3[['usd', 'usd_24h_change','usd_24h_vol','usd_market_cap' ]]
-        df3 = df3.reset_index()
         return df3
 
 df = get_prices(contract_address_list,platform_id,verbose=True)
+df.reset_index(drop=True, inplace=True)
+df3 = df.reset_index(drop=True, inplace=True)
+df3 =  pd.DataFrame(df)
+print(df3.head())
+print(len(df3.index))
+
 df.to_csv('eth_df.csv')
